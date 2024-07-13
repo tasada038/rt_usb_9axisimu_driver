@@ -31,16 +31,67 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import launch
+from launch_ros.actions import LifecycleNode
+from launch.actions import EmitEvent
+from launch_ros.events.lifecycle import ChangeState
+from lifecycle_msgs.msg import Transition
 from launch_ros.actions import Node
-
 
 def generate_launch_description():
     """Generate launch description with multiple components."""
-    driver = Node(
-        name='rt_usb_9axisimu_driver',
+
+    # Define imu madgwick node
+    imu_madgwick_node = Node(
+        package='imu_filter_madgwick',
+        executable='imu_filter_madgwick_node',
+        name='imu_filter',
+        output='screen',
+        parameters=[{
+          'world_frame': 'ned',
+        }]
+    )
+
+    # imu_madgwick_node = Node(
+    #   package='imu_complementary_filter',
+    #   executable='complementary_filter_node',
+    #   name='complementary_filter_gain_node',
+    #   output='screen',
+    #   parameters=[
+    #       {'do_bias_estimation': True},
+    #       {'do_adaptive_gain': True},
+    #       {'use_mag': True},
+    #       {'gain_acc': 0.01},
+    #       {'gain_mag': 0.01},
+    #   ],
+    # )
+
+    # Define the node
+    driver = LifecycleNode(
         package='rt_usb_9axisimu_driver',
         executable='rt_usb_9axisimu_driver',
+        name='rt_usb_9axisimu_driver',
+        namespace='',
         output='screen'
     )
 
-    return launch.LaunchDescription([driver])
+    # Emit events to transition the node through its lifecycle states
+    configure_event = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=lambda node: node == driver,
+            transition_id=Transition.TRANSITION_CONFIGURE
+        )
+    )
+
+    activate_event = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=lambda node: node == driver,
+            transition_id=Transition.TRANSITION_ACTIVATE
+        )
+    )
+
+    return launch.LaunchDescription([
+        driver,
+        configure_event,
+        activate_event,
+        imu_madgwick_node
+    ])

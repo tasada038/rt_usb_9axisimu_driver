@@ -242,3 +242,12 @@ $ ros2 lifecycle set rt_usb_9axisimu_driver configure
 $ ros2 lifecycle set rt_usb_9axisimu_driver activate
 # The node start publishing the topics.
 ```
+
+## 5. TODO revised imu-filter-madgwick version
+
+```sh
+sudo apt -y install ros-$ROS_DISTRO-imu-filter-madgwick
+colcon build --packages-select rt_usb_9axisimu_driver
+ros2 launch rt_usb_9axisimu_driver rt_usb_9axisimu_driver.launch.py
+```
+
